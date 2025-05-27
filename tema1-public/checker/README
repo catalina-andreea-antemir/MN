@@ -1,0 +1,117 @@
+TASK-1 - MARKOV-IS-COMING
+
+1. parse_labyrinth
+    Aceasta functie creeaza o matrice labyrinth pe baza datelor citite din fisierul gait la calea file_path. Fisierul este deschis
+text si se citesc mai intai dimensiunile matricei urmand cele m*n elemente
+
+2. get_adjacency_matrix
+    Definim matricea de adiacenta ca fiind matrice rara adaugand in plus 2 linii si 2 coloane pentru starile WIN si LOSE. Avand in
+vedre ca fieare stare din matice are o codificare pe biti pe baza careia se poate descoperi locul in care exista un perete, am folosit functia bitget. Daca bit ul de pe pozitia 3 (bit ul 4) este 1 inseamna ca in nord exista un perete si nu se poate face deplasarea in acea directie (analog celorlalti biti: bit ul de pe poz 2 (3) - sud, bit ul de pe poz 1 (2) - vest, bit ul de pe poz 1 (0) - est).
+    Starile de WIN se gasesc doar in cazul elementelor de pe prima (bit ul 4 este 1) sau pe ultima (bit ul 3 este 1) linie. Starile
+LOSE se gasesc doar pentru prima (bit ul 2 este 1) sau pentru ultima (bit ul 1 este 1) coloana
+    De asemenea, matricea de adiacenta este simetrica pentru matricea trunchiata de m*n, excluzand starile WIN si LOSE, motiv pentru
+care am lucrat in paralel fata de diagonala principala.
+    La final am adaugat doua stari pentru WIN si LOSE care marcheaza iesirea din labirint.
+
+3. get_link_matrix
+    Initializam matricea Link cu matricea de adiacenta dupa care o transformam intr o matrice stochastica.
+    Astfel, numaram fiecare valoare de 1 de pe fiecare linie urmand sa impartim aceste valori la nr de elemente de 1 de pe fiecare
+linie.
+    La final suma elementelor nenule de pe fiecare linie va fi egala cu 1.
+
+4. get_Jacobi_parameters
+    Pe baza pdf ului cu enuntul se observa ca matricea de iteratie G trebuie sa fie egala cu matricea Link trunchiata la matricea care
+nu contine starile WIN si LOSE, iar vectorul de iteratie c va fi egal cu coloana starii WIN.
+
+5. perform_iterative
+    Aici am folosit algoritmul iterativ Jacobi pe care l am modificat astfel incat sa retinem pasul curent in steps, iar in err norma
+euclidiana a diferentei dintre solutia curenta si cea precedenta.
+    Astfel daca acest err este mai mic decat toleranta atunci iteratia este oprita.
+
+6. heuristic_greedy
+    Initializam traseul cu start_position dupa care marcam
+aceasta pozitie ca fiind vizitata.
+    Verificam daca ultima poztie din traseu este de fapt o
+stare WIN si daca este inseamna ca am gasit iesirea din labirint si ne oprim.
+    Daca nu am gasit starea de WIN, verificam pentru fiecare
+vecin al elementului curent daca a fost vizitat sau nu pentru a ne da seama daca mai are rost sa continuam in directia lui.
+    Daca nu exista vecini nevizitati inseamna ca nodul  
+curent este un punct mort din care nu putem ajunge nicaieri, deci in stergem din traseu.
+    Dupa, adaugam vecinul cu cea mai mare probabilitate de a
+ajunge in starea WIN la traseu si il marcam ca vizitat. 
+
+7. decode_path
+    Aceasta functie are rolul de a obtine pozitiile din
+labirint ale elementelor din traseu
+    Astfel, daca elementul curent din traseu se afla in
+limitele labirintului, atunci il marcam ca valid dupa care ii calculam linia si coloana pe care se afla in labirint si ii adaugam
+pozitia in vectorul de perechi.
+
+
+
+TASK-2 - LINEAR-REGRESSION
+
+1. parse_data_set_file
+    Declaram matricea InitialMatrix ca fiind de tip cell si ii adaugam lui Y valorile numerice de pe prima coloana folosindu ne
+de str2double, intrucat strtok ul returneaza numarul sub foama de string
+    Pentru restul matricei, verificam daca celula contine o valoare numerica sau nu si adaugam in matrice valoarea corespunzatoare,
+string sau valoare numerica.
+
+2. parse_csv_file
+    Aici se intampla acelasi lucru ca la parse_data_set_file doar ca nu cunoastem dimensiunile matricei, iar elementele din fisier
+sunt despartite prin virgula. Astfel ne folosim tot de strtok pt fiecare linie din fisier si setam separatorul corespunzator.
+    De asemenea tinem evidenta numarului de linii si celui de coloane cu fiecare element citit din fisier.
+
+3. prepare_for_regression
+    Parcurgem matricea InitialMatrix linie cu linie.
+    Daca gasim un element cu valoarea "semi-furnished", atunci matricea FeatureMatrix va contine doua elemente reprezentative
+acestuia, 1 si 0.
+    Daca gasim un element cu valoarea "furnished", atunci matricea FeatureMatrix va contine doua elemente reprezentative
+acestuia, 0 si 0.
+    Daca gasim un element cu valoarea "unfurnished", atunci matricea FeatureMatrix va contine doua elemente reprezentative
+acestuia, 0 si 1.
+    Daca gasim un element cu valoarea "yes", atunci matricea FeatureMatrix va contine 1, iar daca elementul gasit are valoarea
+"no", matricea FeatureMatrix va contine 0.
+    In rest, daca elementele gasite sunt valori numerice, atunci ele vor fi doar transferate in matricea FeatureMatrix.
+    De asta ne am folosit de un contor pentru coloane, ca sa nu riscam pozitionarea incorecta a elementelor in matrice.
+
+4. linear_regression_cost_function
+    Implementam formula din enuntul temei.
+    Scriem h(x) ca combinatie liniara intre coloanele lui FeatureMatrix si Theta si ignoram theta zero intrucat este nul
+si la afunare nu infuenteaza calculul.
+    Scadem din acesta valorile din Y si facem suma patratellor acestor valori, la final impartind suma la 2*m
+
+5. gradient_descent
+    Implementam formula din enuntul temei.
+    Calculam (h - y) * x' si facem suma fiecarui element impartit la m. La final modificam valoarea lui Theta prin scaderea
+din acest alpha * suma calculata precendent.
+    Dupa toate acestea adaugam bias ul la final. (theta zero)
+
+6. normal_equation
+    Implementam algoritmul gradientului conjugat.
+    Pentru a rezolva sistemul Ax = b, consideram A = FeatureMatrix' * FeatureMatrix si b = FeatureMatrix' * Y, notatii pe care
+le am dedus din forumla X'X*Theta = X'Y, Theta fiind considerat necunoscuta x.
+
+7. lasso_regression_cost_function
+    Implementam formula data in enunt.
+    Calculam suma modulelor elementelor lui Theta.
+    Calculam combinatia liniara h ignorand theta zero intrucat nu s ar respecta regula dimensiunilor pt inmultire si avand
+in vedere ca acesta are valoarea nula nu influenteaza eliminarea lui.
+
+8. ridge_regression_cost_function
+    Implementam formula data in enunt.
+    Calculam suma patratelor elementelor lui  Theta.
+    Calculam h ignorand theta zero, acesta avand valoarea nula. Daca l am lua in connsiderare regula pt dimensiuni la
+inmultire nu ar mai fi respectata.
+
+
+
+TASK-3 - MNIST
+
+1. load_dataset
+    Am folosit comanda load pt a incarca datele din fisierul .mat care contine o matrice X de exemple pt training
+si un vector de etichete y.
+
+2. split_dataset
+    Se calculeaza k pe baza nr de exemple din matricea X (m linii) si se impart primele k exemple din X in mtricea
+X_train si restul in matricea X_test. De asemenea, primele k etichete din y se vor transfera in y_train, iar restul in y_test.
