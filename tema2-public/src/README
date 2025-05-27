@@ -1,0 +1,173 @@
+Antemir Andreea-Catalina - 314CA
+
+TASK-1 -- NUMERICAL MUSIC
+
+1 - STEREO_TO_MONO
+- functia are rolul de a transforma un semnal stereo (2 sau mai multe canale)
+intr unul mono (un singur canal), calculand media canalelor de pe fiecare
+esantion (linie)
+- la final se impare fiecare valoare retinuta in vectorul mono (medie) la
+valoarea maxima din vector (normalizare) pentru a obtine valori intre -1 si 1
+
+2 - SPECTROGRAM
+- impartim matricea data in num_windows ferestre de dimensiune window_size
+- calculam vectorul hann folosind functia hanning hint uita in enunt
+- pentru fiecare fereastra determinam pozitia sa in semnal si ii aplicam vectorul
+hann inmultind fiecare lement din fereastra extrasa cu vectorul hann calcuat mai
+devreme
+- aplicam fft cu rezolutie dubla pentru a afla ce frecvente contine fereastra curenta
+- pastram doar prima jumatate din rezultatul fft (frecventele pozitive)
+- le adaugam modulul (numere complexe -> numere reale) in matricea S (matricea
+spectrograma) unde fiecare coloana reprezinta un moment in timp iar fiecare linie
+amplitudinea frecventelor calculate la momentul de timp respectiv
+- la final creeaza vectorul de frecvente (fiecare linie din S) si vectorul de
+timp (fiecare coloana din S)
+
+*STUDIO.M*
+    -am adaugat in studio.m o secventa de cod pentru a genera un grafic in
+    cazul unei frecvente de 5000hz
+    -pe acesta se observa o banda orizontala subtire si bine delimitata, la
+    nivelul frecventei de 5000hz pe toata durata semnalului
+    -aceasta confirma ca fucntia functioneaza corect, la o frecventa inalta, se
+    identufica precis frecventa dominanta.
+
+3 - OSCILLATOR
+- calculam numarul total de esantioane (valori discrete) pe care le va avea
+semnalul sinusoidal
+- creeam un vector de timp in care calculam momentul de timp precis pentru fiecare
+esantion
+- cream o unda sinusoidala cu frevneta freq transmisa ca parametru
+- calculam numarul de esantioane pentru fiacre faza: faza attack, fara decay,
+cea de release si cea de sustain, impartind durata fiecarei faze la fs (numarul
+de esantioane pt fiecare secunda), mai putin pentru faza de sustinere in care
+adaugam nr de esantioane ramase dupa impartirea pe celalte faze
+- faza de attack
+    - daca avem dar un esantion initializam valoarea in vectorul envelope direct
+    la valoarea maxima (1)
+    - altfel se adauga uniform valori din intervalul [0, 1] pentru cele a esantioane 
+- faza de decay
+    - daca in aceasta faza exista un singur esantion adaugam in envelope direct
+    S (valoare de sustinere)
+    - altfel adaugam unifor descrescator valori din intervalul [1, S] pentru cele
+    d esantioane
+- faza de sustain
+    - adsugam pentru toate cele s esantioane valoarea S
+- faza de release
+    - daca avem dar un esantion in aceasta faza adaugam in vector valoarea 0
+    (valoare minima)
+    - in caz contrar adaugam descrescator uniform valori din [S, 0] pentru cele
+    r esantioane
+- la fina aplicam envelope pe unda sinusoidala si rezultatul in scriem in x
+
+4 - HIGH-PASS
+- calculam transformata fourier a semnalului
+- calculam frecventele ca la stereo_to_mono si le retinem intr un vector
+- construim masca pastrand simetria data de transformata fourier : daca valoarea
+frecventei este mai mare decat cutoff atunci este considerata valida iar masca
+va lua valoarea 1, asemeni pentru valoarea sa simetrica in vector
+- calculam produsul hadamard inmultind rezultatul transformarii fourier cu masca
+element cu element
+- dupa aplicam transformata fourier inversa folosinf functia predefinita ifft pe
+produsul calculat anterior si salvam rezultatul in semnalul care trebuie returnat
+- la final normalizam semnalul impartind fiecare element la valoarea maxima din
+semnal
+
+5 - APPLY-REVERB
+- transformam impulse_response intr un semnal mono cu un singur canal folosind
+stereo_to_mono
+- calculam convolutia dintre semnal si impulse_response folosind functia fftconv
+si o salvam in semnalul care trebuie returnat
+- la final normalizam semnalul impartind valorile lui la valoarea maxima in modul
+
+
+TASK-2 -- ROBOTZII
+
+1 - PARSE-DATA
+- citim din fisierul de la calea path numarul n si apoi cele n+1 valori x si
+cele n+1 valori y
+
+2 - SPLINE-C2
+- n reprezinta numarul de intervale, A este matricea sistemuli (initializata ca
+fiind sparse pentru eficienta) si b este vectorul termenilor liberi
+- in primul for initializam coeficientii a cu valorile din y intrucat valoarea
+polinomului s-i(x_i) = a_i = y_i (n ecuatii)
+- dupa realizam interpolarea spline cubica pentru ultimul punct (xn, yn) unde
+aplicam formula s_n-1(x_n) = y_n (o ecuatie)
+- in al doilea for asiguram faptul ca polinoamele vecine s_i si s_i+1 au aceeasi
+in punctul comun aplicand s_i(x_i+1) = s_i+1(x_i+1) de unde vom avea n-1 ecuatii
+de aceasta forma
+- in al treilea for asigura ca doua polinoame consecutive calculate in acelasi
+punct au aceeasi derivata s_i'(x_i+1) = s_i+1'(x_i+1) de unde vom adauga n-1
+ecuatii la sistem
+- in al patrylea for se asigura ca doua polinoame consecutive calculate in acelasi
+punct au aceeasi derivata de ordin 2 s_i''(x_i+1) = s_i+1''(x_i+1) de unde vom
+adauga n-1 ecuatii
+- la final se asauga ultimele 2 ecuatii ale sistemului care asigura ca
+s_0''(x0) = 0 si s_n-1''(x_n) = 0
+- vectorul b fiind initializat cu zerouri trebuie modificat dor prin adaugarea
+pe primele n+1 pozitii a valorilor din y
+- aflam coeficientii prin rezolvarea sistemului A*coef = b, de unde rezulta ca
+coef = A^-1 * b
+
+3 - P_SPLINE
+- n reprezinta numarul de intervale, n_interp nr de puncte care trebuiesc
+interpolate (iin care trebuie sa calculam valoarea polinomului)
+- stabilim ce polinom trebuie folosit pentru punctul curent din x_interp
+- setam ca polinom implicit s_0
+- daca valoarea abscisei curente este mai mare decat valoarea ultimului punct
+x (valori crescatoare), folosim ultimul polinom s_n-1
+daca nu se indeplineste aceasta conditie cautam intervalul in care se afla abscisa
+folosind cautare binara pentru eficienta
+- dupa ce am gasit polinomul care trebuie utilizat pentru abscisa curenta stabilim
+coeficientii sai si calculam y_interp (valoarea polinomului in abscisa)
+
+4 - VANDERMONDE
+- n este numarul de intervale, A matricea sistemului si b vectorul termenilor 
+liberi
+- calculam matricea A care contine pe linia i valorile punctului x_i ridicat la
+puterea j unde  unde j este indicele de coloana a lui A (j = 0...n)
+- vectorul termenilor liberi este egal cu valorile lui y
+- la final calculam valoarea coeficientilor prin rezolvarea sistemului A * coef = b
+adica coef = A^-1 * b
+
+5 - P_VANDERMONDE
+- n este nr de intervale, n_interp nr de abscise in care trebuie sa calculam
+valoarea polinomului (y_interp)
+- calculam polinomul ca fiind o combinatie liniara intre vectorul coeficientilor
+si abscisa curenta ridicata pe rand la puterea coloanei curente (0...n)
+- la final adaugam valoarea polinomului in abscisa curenta in y_interp
+
+
+TASK-3 -- RECOMMENDATIONS
+
+1 - READ_MAT
+- am aplicat functia csvread propusa in enunt pentru a citi matricea din
+fisierul .csv
+
+2 - PREPROCESS
+- count reprezinta un vector in care retinem numarul de review uri nenule de pe
+fiecare linie a matricei matricea
+- daca nr de review uri nenule de pe linia curenta este mai mare sau egala decat
+min_reviews, adaugam in vectorul valid linia curenta
+- la final adaugam in matricea reduced_mat, liniile valide din matricea mat
+retinute in vectorul valid
+
+3 - COSINE_SIMILARITY
+- lA este dimensiunea vectorului A, lB dimensiunea vectorului B
+- calculam produsul scalar intre cei doi vectori daca acestia au aceeasi
+dimensiune
+- calculam cosine_similarity prin aplicarea formulei din enunt
+
+4 - RECOMMENDATIONS
+- citim matricea din fisierul .csv folosin functia read_mat
+- aplicam functia preprocess pe matricea citita
+- descompunem matricea mat in valori singulare, unde in continuare ne vom folosi
+de matricea V care contine caracteristicile fiecarei teme
+- retinem in liked caracteristicile lui liked_theme din matricea V, in recoms cele
+mai bune num_recoms recomandari si in sims similaritatea dintre fiecare tema si
+liked_theme
+- populam sims apeland functia cosine_similarity
+- in vectorul gol indices retinem indicii temelor care nu sunt liked_theme
+- in vettorul gol scores retinem similaritatile temelor care nu sunt liked_theme
+- sortam descrescator scorurile si indicii pentru ca apoi sa retinem in recoms
+indicii primelor num_recoms teme care au scorurile cele mai mari
